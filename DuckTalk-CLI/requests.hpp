@@ -6,11 +6,12 @@
 
 class HttpRequests {
 public:
-    HttpRequests(std::string ip);
-    std::string get_request();
+    HttpRequests(std::string ip, std::string host_post);
+    std::string get_request(std::string path);
     std::string post_request(const std::string& path, const std::string& payload);
 protected:
     std::string host;
+    std::string port;
 };
 
 #endif

@@ -7,16 +7,17 @@
 
 using boost::asio::ip::tcp;
 
-    HttpRequests::HttpRequests(std::string ip) {
+    HttpRequests::HttpRequests(std::string ip, std::string host_port) {
         host = ip;
+        port = host_port;
     }
 
-    std::string HttpRequests::get_request() {
+    std::string HttpRequests::get_request(std::string path) {
         boost::asio::io_service io_service;
 
         // Resolve DNS to get the IP address of the server
         tcp::resolver resolver(io_service);
-        tcp::resolver::query query(host, "80");
+        tcp::resolver::query query(host, port);
         tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 
         // Establish a connection to the server
@@ -26,7 +27,7 @@ using boost::asio::ip::tcp;
         // Send the HTTP request
         boost::asio::streambuf request;
         std::ostream request_stream(&request);
-        request_stream << "GET / HTTP/1.1\r\n";
+        request_stream << "GET " << path << " HTTP/1.1\r\n";
         request_stream << "Host: " << host << "\r\n";
         request_stream << "Accept: */*\r\n";
         request_stream << "Connection: close\r\n\r\n";
@@ -57,12 +58,14 @@ using boost::asio::ip::tcp;
         return ss.str();
     }
 
+
     std::string HttpRequests::post_request(const std::string& path, const std::string& payload) {
+        std::cout << "host: " << host << " port: " << port << std::endl;
         boost::asio::io_service io_service;
 
         // Resolve DNS to get the IP address of the server
         tcp::resolver resolver(io_service);
-        tcp::resolver::query query(host, "80");
+        tcp::resolver::query query(host, port);
         tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 
         // Establish a connection to the server
