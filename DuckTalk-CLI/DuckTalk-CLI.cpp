@@ -5,6 +5,7 @@
 #include "requests.hpp"
 
 
+
 std::unordered_map<std::string, std::string> read_config_file(const std::string& file_path)
 {
     std::ifstream file(file_path);
@@ -12,9 +13,10 @@ std::unordered_map<std::string, std::string> read_config_file(const std::string&
 
     if (!file.good()) {
         std::ofstream default_config(file_path);
-        default_config << "api_host=" << std::endl;
+        default_config << "host=" << std::endl;
+        default_config << "port=" << std::endl;
         default_config.close();
-        std::cerr << "No config file found, created a default one with empty api_host" << std::endl;
+        std::cerr << "No config file found, created a default config" << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -38,18 +40,41 @@ std::unordered_map<std::string, std::string> read_config_file(const std::string&
 }
 
 
-void handle_command(const std::string host, const std::string& cmd, const std::string& arg1)
+void handle_command(const std::string& host, const std::string& port, const std::string& cmd, const std::string& arg1 = "", const std::string& arg2 = "", const std::string& arg3 = "")
 {
-    if (cmd == "send") {
-        // implement logic to send post
-        std::cout << "Sending post " << arg1 << std::endl;
+    if (cmd == "login" && arg2 != "" && arg3 != "") {
+        std::cout << "Loging in as  " << arg1 << "With the email: " << arg2 << std::endl;
+        // Implement logic to login the user
     }
+    else if (cmd == "send_message") {
+        std::cout << "Sending message " << arg1 << std::endl;
+        // implement logic to send post
 
-    if (cmd == "get") {
-        HttpRequests request(host);
-        std::string response = request.get_request();
+        //Test implementation
+        std::string endpoint = "/posts";
+        std::string payload = R"(
+            {
+                "title": "foo",
+                "body": "bar",
+                "userId": 1
+            }
+        )";
+        std::cout << host << port << std::endl;
+        HttpRequests request(host, port);
+        std::string response = request.post_request(endpoint, payload);
         std::cout << response << std::endl;
-        std::cout << "Sending get " << arg1 << std::endl;
+
+    }
+    else if (cmd == "get_messages") {
+        std::cout << "Getting messages " << arg1 << std::endl;
+
+        std::cout << host << port << std::endl;
+        HttpRequests request(host, port);
+        std::string response = request.get_request("/posts");
+        std::cout << response << std::endl;
+    }
+    else {
+        std::cout << "Invalid Command" << std::endl;
     }
 }
 
@@ -57,19 +82,23 @@ int main(int argc, char* argv[])
 {
     if (argc < 2)
     {
-        std::cerr << "Usage: " << argv[0] << " [command]" << std::endl;
+        std::cout << "Usage: " << argv[0] << " [command]" << std::endl;
         return 1;
     }
 
     std::string config_path = "config.ini";
     std::unordered_map<std::string, std::string> config = read_config_file(config_path);
-    std::string api_host = config["api_host"];
+    std::string host = config["host"];
+    std::string port = config["port"];
+
 
     // Handle the command
     std::string cmd = argv[1];
-    std::string arg1 = argv[2];
+    std::string arg1 = argc > 2 ? argv[2] : "";
+    std::string arg2 = argc > 3 ? argv[3] : "";
+    std::string arg3 = argc > 4 ? argv[4] : "";
 
-    handle_command(api_host, cmd, arg1);
+    handle_command(host, port, cmd, arg1, arg2, arg3);
 
     return 0;
 }
