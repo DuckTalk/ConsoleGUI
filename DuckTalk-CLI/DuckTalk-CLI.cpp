@@ -40,7 +40,7 @@ std::unordered_map<std::string, std::string> read_config_file(const std::string&
 }
 
 
-void handle_command(HttpRequests& request, const std::string& cmd, const std::string& arg1 = "", const std::string& arg2 = "", const std::string& arg3 = "")
+void handle_command(const std::string& host, const std::string& port, const std::string& cmd, const std::string& arg1 = "", const std::string& arg2 = "", const std::string& arg3 = "")
 {
     if (cmd == "login" && arg2 != "" && arg3 != "") {
         std::cout << "Loging in as  " << arg1 << "With the email: " << arg2 << std::endl;
@@ -59,6 +59,8 @@ void handle_command(HttpRequests& request, const std::string& cmd, const std::st
                 "userId": 1
             }
         )";
+        std::cout << host << port << std::endl;
+        HttpRequests request(host, port);
         std::string response = request.post_request(endpoint, payload);
         std::cout << response << std::endl;
 
@@ -66,7 +68,9 @@ void handle_command(HttpRequests& request, const std::string& cmd, const std::st
     else if (cmd == "get_messages") {
         std::cout << "Getting messages " << arg1 << std::endl;
 
-        std::string response = request.get_request("/posts/1");
+        std::cout << host << port << std::endl;
+        HttpRequests request(host, port);
+        std::string response = request.get_request("/posts");
         std::cout << response << std::endl;
     }
     else {
@@ -87,9 +91,6 @@ int main(int argc, char* argv[])
     std::string host = config["host"];
     std::string port = config["port"];
 
-    std::cout << "host: " << host << " port: " << port << std::endl;
-
-    HttpRequests request(host, port);
 
     // Handle the command
     std::string cmd = argv[1];
@@ -97,7 +98,7 @@ int main(int argc, char* argv[])
     std::string arg2 = argc > 3 ? argv[3] : "";
     std::string arg3 = argc > 4 ? argv[4] : "";
 
-    handle_command(request, cmd, arg1, arg2, arg3);
+    handle_command(host, port, cmd, arg1, arg2, arg3);
 
     return 0;
 }
