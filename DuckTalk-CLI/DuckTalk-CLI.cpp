@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <sstream>
 #include "requests.hpp"
+#include <nlohmann/json.hpp>
 
 
 
@@ -42,9 +43,27 @@ std::unordered_map<std::string, std::string> read_config_file(const std::string&
 
 void handle_command(const std::string& host, const std::string& port, const std::string& cmd, const std::string& arg1 = "", const std::string& arg2 = "", const std::string& arg3 = "")
 {
-    if (cmd == "login" && arg2 != "" && arg3 != "") {
-        std::cout << "Loging in as  " << arg1 << "With the email: " << arg2 << std::endl;
-        // Implement logic to login the user
+    if (cmd == "create_user") {
+        // creates a user on the server
+        try {
+            std::string endpoint = "/api/user";
+            nlohmann::json payload = {
+                {"data", {
+                    {"username", arg1},
+                    {"email", arg2},
+                    {"pw_hash", arg3},
+                    {"salt", "beans"}
+                }}
+            };
+
+            HttpRequests request(host, port);
+            std::string response = request.post_request(endpoint, payload.dump());
+            std::cout << response << std::endl;
+        }
+        catch (const std::exception& e) {
+            std::cout << "Error resolving hostname: " << e.what() << std::endl;
+        }
+
     }
     else if (cmd == "send_message") {
         std::cout << "Sending message " << arg1 << std::endl;
@@ -59,7 +78,6 @@ void handle_command(const std::string& host, const std::string& port, const std:
                 "userId": 1
             }
         )";
-        std::cout << host << port << std::endl;
         HttpRequests request(host, port);
         std::string response = request.post_request(endpoint, payload);
         std::cout << response << std::endl;
@@ -68,7 +86,6 @@ void handle_command(const std::string& host, const std::string& port, const std:
     else if (cmd == "get_messages") {
         std::cout << "Getting messages " << arg1 << std::endl;
 
-        std::cout << host << port << std::endl;
         HttpRequests request(host, port);
         std::string response = request.get_request("/posts");
         std::cout << response << std::endl;
@@ -90,6 +107,11 @@ int main(int argc, char* argv[])
     std::unordered_map<std::string, std::string> config = read_config_file(config_path);
     std::string host = config["host"];
     std::string port = config["port"];
+
+    const std::string prefix = "https://";
+    if (host.compare(0, prefix.size(), prefix) == 0) {
+        host = host.substr(prefix.size());
+    }
 
 
     // Handle the command
