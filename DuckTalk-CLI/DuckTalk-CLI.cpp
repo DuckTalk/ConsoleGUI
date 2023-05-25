@@ -59,28 +59,55 @@ void handle_command(const std::string& host, const std::string& port, const std:
             HttpRequests request(host, port);
             std::string response = request.post_request(endpoint, payload.dump());
             std::cout << response << std::endl;
+
+            auto json_response = nlohmann::json::parse(response);
+            if (json_response["error"] == false) {
+                std::cout << "User created successfully" << std::endl;
+            }
+            else {
+                std::cout << "An error occurred while creating the user" << std::endl;
+            }
         }
         catch (const std::exception& e) {
             std::cout << "Error resolving hostname: " << e.what() << std::endl;
         }
 
     }
-    else if (cmd == "send_message") {
-        std::cout << "Sending message " << arg1 << std::endl;
-        // implement logic to send post
+    else if (cmd == "send_message") {       
+        try {
+            std::string endpoint = "/api/message";
+            "data": (A dictionary containing the request data)
 
-        //Test implementation
-        std::string endpoint = "/posts";
-        std::string payload = R"(
-            {
-                "title": "foo",
-                "body": "bar",
-                "userId": 1
+                "sender_id" : 51 (The user_id of the sender)
+                "receiver" : (A dictionary of data about the receiver of the message)
+                "type" : "user" (The type of message receiver, either "user" or "group")
+                "user_id" : 92 (The id of the receiver, the key is either user_id or group_id)
+                "content" : "6ekd980optak1" (The encrypted message content)
+
+            nlohmann::json payload = {
+                {"data", {
+                    {"sender_id", arg1},
+                    {"receiver", arg2},
+                    {"pw_hash", arg3},
+                    {"salt", "beans"}
+                }}
+            };
+
+            HttpRequests request(host, port);
+            std::string response = request.post_request(endpoint, payload.dump());
+            std::cout << response << std::endl;
+
+            auto json_response = nlohmann::json::parse(response);
+            if (json_response["error"] == false) {
+                std::cout << "User created successfully" << std::endl;
             }
-        )";
-        HttpRequests request(host, port);
-        std::string response = request.post_request(endpoint, payload);
-        std::cout << response << std::endl;
+            else {
+                std::cout << "An error occurred while creating the user" << std::endl;
+            }
+        }
+        catch (const std::exception& e) {
+            std::cout << "Error resolving hostname: " << e.what() << std::endl;
+        }
 
     }
     else if (cmd == "get_messages") {
