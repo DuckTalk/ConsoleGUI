@@ -43,7 +43,7 @@ std::unordered_map<std::string, std::string> read_config_file(const std::string&
 
 void handle_command(const std::string& host, const std::string& port, const std::string& cmd, const std::string& arg1 = "", const std::string& arg2 = "", const std::string& arg3 = "")
 {
-    if (cmd == "create_user") {
+    if (cmd == "register") {
         // creates a user on the server
         try {
             std::string endpoint = "/api/user";
@@ -58,7 +58,6 @@ void handle_command(const std::string& host, const std::string& port, const std:
 
             HttpRequests request(host, port);
             std::string response = request.post_request(endpoint, payload.dump());
-            std::cout << response << std::endl;
 
             auto json_response = nlohmann::json::parse(response);
             if (json_response["error"] == false) {
@@ -72,50 +71,86 @@ void handle_command(const std::string& host, const std::string& port, const std:
             std::cout << "Error resolving hostname: " << e.what() << std::endl;
         }
 
+    }
+    else if (cmd == "login") {
+        // this creates a pseudo login which saves the logged in userid into a text file
+        int userid = NULL;
+        std::string username = "";
+        std::string userid_entpoint = "/api/user/" + arg1;
+
+        HttpRequests request(host, port);
+        std::string response_userid = request.get_request(userid_entpoint);
+
+        auto userid_response = nlohmann::json::parse(response_userid);
+        if (userid_response["error"] == false) {
+            userid = userid_response["data"]["user_id"];
+            username = userid_response["data"]["username"];
+
+            // Save the user ID to a text file
+            std::ofstream outfile("user_id.txt");
+            outfile << userid;
+            outfile.close();
+
+            std::cout << "Successfully logged in as " << username << std::endl;
+        }
+        else {
+            std::cout << "An error occurred while trying to get the user_id of email" << std::endl;
+        }
     }
     else if (cmd == "send_message") {       
         try {
+            int receiver_userid = NULL;
+            int sender_userid = NULL;
             std::string endpoint = "/api/message";
-            "data": (A dictionary containing the request data)
+            std::string userid_entpoint = "/api/user/" + arg2;
 
-                "sender_id" : 51 (The user_id of the sender)
-                "receiver" : (A dictionary of data about the receiver of the message)
-                "type" : "user" (The type of message receiver, either "user" or "group")
-                "user_id" : 92 (The id of the receiver, the key is either user_id or group_id)
-                "content" : "6ekd980optak1" (The encrypted message content)
+
+            HttpRequests request(host, port);
+            std::string response_userid = request.get_request(userid_entpoint);
+
+            auto userid_response = nlohmann::json::parse(response_userid);
+            if (userid_response["error"] == false) {
+                receiver_userid = userid_response["data"]["user_id"];
+            }
+            else {
+                std::cout << "An error occurred while trying to get the user_id of email" << std::endl;
+            }
+
+            std::ifstream infile("user_id.txt");
+            if (infile.is_open()) {
+                infile >> sender_userid;
+                infile.close();
+            }
+            else {
+                std::cerr << "Failed to open user_id.txt" << std::endl;
+            }
+
 
             nlohmann::json payload = {
                 {"data", {
-                    {"sender_id", arg1},
-                    {"receiver", arg2},
-                    {"pw_hash", arg3},
-                    {"salt", "beans"}
+                    {"sender_id", sender_userid},
+                    {"receiver", {
+                        {"type", arg1},
+                        {"user_id", receiver_userid}
+                    }},
+                    {"content", arg3}
                 }}
             };
 
-            HttpRequests request(host, port);
             std::string response = request.post_request(endpoint, payload.dump());
-            std::cout << response << std::endl;
 
             auto json_response = nlohmann::json::parse(response);
             if (json_response["error"] == false) {
-                std::cout << "User created successfully" << std::endl;
+                std::cout << "Message sent successfully" << std::endl;
             }
             else {
-                std::cout << "An error occurred while creating the user" << std::endl;
+                std::cout << "An error occurred while sending the message" << std::endl;
             }
         }
         catch (const std::exception& e) {
             std::cout << "Error resolving hostname: " << e.what() << std::endl;
         }
 
-    }
-    else if (cmd == "get_messages") {
-        std::cout << "Getting messages " << arg1 << std::endl;
-
-        HttpRequests request(host, port);
-        std::string response = request.get_request("/posts");
-        std::cout << response << std::endl;
     }
     else {
         std::cout << "Invalid Command" << std::endl;
