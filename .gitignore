@@ -7,6 +7,12 @@
 *.o
 *.obj
 
+# custom
+
+*.txt
+*.ini
+DuckTalk-CLI/x64/Debug/
+
 # Precompiled Headers
 *.gch
 *.pch

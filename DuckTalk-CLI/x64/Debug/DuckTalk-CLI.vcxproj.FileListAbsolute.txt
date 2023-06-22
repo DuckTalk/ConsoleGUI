@@ -1,2 +1,0 @@
-C:\Users\Stefan Pfeiffer\repos_school\ConsoleGUI\DuckTalk-CLI\x64\Debug\DuckTalk-CLI.exe
-C:\Users\Stefan Pfeiffer\repos_school\DuckTalk\ConsoleGUI\DuckTalk-CLI\x64\Debug\DuckTalk-CLI.exe
