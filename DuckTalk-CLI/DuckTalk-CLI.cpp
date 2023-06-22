@@ -1,4 +1,5 @@
 #include <iostream>
+#include <list>
 #include <fstream>
 #include <unordered_map>
 #include <sstream>
@@ -68,7 +69,7 @@ void handle_command(const std::string& host, const std::string& port, const std:
             }
         }
         catch (const std::exception& e) {
-            std::cout << "Error resolving hostname: " << e.what() << std::endl;
+            std::cout << "Error: " << e.what() << std::endl;
         }
 
     }
@@ -122,7 +123,7 @@ void handle_command(const std::string& host, const std::string& port, const std:
                 infile.close();
             }
             else {
-                std::cerr << "Failed to open user_id.txt" << std::endl;
+                std::cerr << "Failed to get user id from user_id.txt" << std::endl;
             }
 
 
@@ -148,10 +149,74 @@ void handle_command(const std::string& host, const std::string& port, const std:
             }
         }
         catch (const std::exception& e) {
-            std::cout << "Error resolving hostname: " << e.what() << std::endl;
+            std::cout << "Error: " << e.what() << std::endl;
         }
 
     }
+
+    else if (cmd == "get_chat") {
+        try {
+            int receiver_userid = NULL;
+            int sender_userid = NULL;
+            
+            std::list<std::string> Data;
+            std::string endpoint = "/api/message/";
+            std::string userid_entpoint = "/api/user/" + arg1;
+
+
+            HttpRequests request(host, port);
+            std::string response_userid = request.get_request(userid_entpoint);
+
+            auto userid_response = nlohmann::json::parse(response_userid);
+            if (userid_response["error"] == false) {
+                receiver_userid = userid_response["data"]["user_id"];
+            }
+            else {
+                std::cout << "An error occurred while trying to get the user_id of email" << std::endl;
+            }
+
+            std::ifstream infile("user_id.txt");
+            if (infile.is_open()) {
+                infile >> sender_userid;
+                infile.close();
+            }
+            else {
+                std::cerr << "Failed to get user id from user_id.txt" << std::endl;
+            }
+            int count = 1;
+            while (true) {
+                std::string req_endpoint = endpoint + std::to_string(count);
+                std::string response = request.get_request(req_endpoint);
+
+
+                auto json_response = nlohmann::json::parse(response);
+                if (json_response["error"] == true) {
+                    break;
+                }
+                else {
+                    Data.push_back(json_response["data"].dump());
+                }
+                count++;
+            }
+
+            if (Data.empty() == false) {
+                for (const std::string& str : Data) {
+                    auto message = nlohmann::json::parse(str);
+                    if (message["receiver"]["type"] == "user" && (message["sender_id"] == sender_userid || message["sender_id"] == receiver_userid || message["receiver"]["user_id"] == sender_userid || message["receiver"]["user_id"] == receiver_userid)) {
+                        std::cout << str << ' ';
+                    }
+                }
+            }
+            else {
+                std::cout << "No message history found" << std::endl;
+            }
+        }
+        catch (const std::exception& e) {
+            std::cout << "Error: " << e.what() << std::endl;
+        }
+
+    }
+
     else {
         std::cout << "Invalid Command" << std::endl;
     }
